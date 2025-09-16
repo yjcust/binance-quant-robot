@@ -6,7 +6,6 @@ from app.OrderManager import OrderManager
 
 import time
 import datetime
-import schedule
 import math
 import json,os
 from strategyConfig import binance_market,binance_coinBase,binance_tradeCoin, binance_coinBase_count
@@ -28,7 +27,7 @@ def sendInfoToDingDing( message, isDefaultToken):
 
 
 def binance_func():
-    orderManager.binance_func()
+    orderManager.binance_func_mock()
     # time.sleep(5)
     # orderManager_eth.binance_func()
 
@@ -40,19 +39,17 @@ def sendServiceInfo():
 # 创建循环任务
 def tasklist():
     #清空任务
-    schedule.clear()
+    #schedule.clear()
     #创建一个按秒间隔执行任务
     # schedule.every().hours.at("04:05").do(binance_func)
 
     #
-    schedule.every(15).seconds.do(binance_func)
+    # schedule.every(15).seconds.do(binance_func)
+    #
+    # schedule.every(20).minutes.do(sendServiceInfo)
 
-    schedule.every(20).minutes.do(sendServiceInfo)
-
-
-    while True:
-        schedule.run_pending()
-        time.sleep(1)
+    binance_func()
+    #sendServiceInfo()
 
 
 # 调试看报错运行下面，正式运行用上面

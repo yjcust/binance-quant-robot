@@ -1,12 +1,14 @@
 # -*- coding: utf-8 -*-
 
-import json, os, time, datetime, math
+import json, os, time, math
+import traceback
+from datetime import datetime
 from app.BinanceAPI import BinanceAPI
+from app.LiveData import LiveData
 
 from app.authorization import api_key,api_secret
 from app.dingding import Message
 from DoubleAverageLines_static import DoubleAverageLines
-import schedule
 from strategyConfig import sellStrategy1, sellStrategy2, sellStrategy3 , ma_x, ma_y, isOpenSellStrategy, kLine_type
 
 
@@ -257,7 +259,7 @@ class OrderManager(object):
     # 获取K线列表
     def gain_kline(self, symbol, timeInterval='15m'):
         # 结束时间
-        millis_stamp = int(round(time.time() * 1000))
+        millis_stamp = int(round(LiveData().get_time() * 1000))
 
         # 如何处理虚假买点和虚假卖点，1000条数据中，第一条可能产生虚假的买点和卖点
         kline_json = binan.get_klines(symbol, timeInterval, 1000, None, millis_stamp)
@@ -279,7 +281,20 @@ class OrderManager(object):
         print(self.symbol + " 交易量格式化= "+str(newQuantity))
         return newQuantity
 
-    def binance_func(self):
+    def binance_func_mock(self):
+        # 获取K线数据
+        kline_list = self.gain_kline(self.symbol, kLine_type)
+        # k线数据转为 DataFrame格式
+        kline_list2=kline_list[:60]
+
+        for i in range(60,len(kline_list)):
+            kline_list2.append(kline_list[i])
+
+
+            LiveData().set_time(kline_list[i][0]/1000)
+            LiveData().set_now_price(float(kline_list[i][4]))
+            self.binance_func(dALines.klinesToDataFrame(kline_list2))
+    def binance_func(self,kline_df):
         print("币种= "+self.trade_coin)
         try:
             self.gain_exchangeRule(self.symbol)
@@ -288,15 +303,16 @@ class OrderManager(object):
             isDefaultToken = False
 
             # 记录执行时间
-            now = datetime.datetime.now()
-            ts = now.strftime('%Y-%m-%d %H:%M:%S')
+            now = LiveData().get_time()
+            ts = datetime.fromtimestamp(now).strftime('%Y-%m-%d %H:%M:%S')
             print('do func time：', ts)
             msgInfo = msgInfo + str(ts) + "\n"
 
-            # 获取K线数据
-            kline_list = self.gain_kline(self.symbol, kLine_type)
-            # k线数据转为 DataFrame格式
-            kline_df = dALines.klinesToDataFrame(kline_list)
+            if kline_df is None:
+                # 获取K线数据
+                kline_list = self.gain_kline(self.symbol, kLine_type)
+                # k线数据转为 DataFrame格式
+                kline_df = dALines.klinesToDataFrame(kline_list)
 
             # 判断交易方向
             trade_direction = dALines.release_trade_stock(ma_x, ma_y, self.symbol, kline_df)
@@ -386,6 +402,7 @@ class OrderManager(object):
 
             print("-----------------------------------------------\n")
         except Exception as ex:
+            traceback.print_exc()  # 打印完整堆栈
             err_str = "出现如下异常：%s" % ex
             print(err_str)
             msgInfo = msgInfo + str(err_str) + "\n"

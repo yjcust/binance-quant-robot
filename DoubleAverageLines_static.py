@@ -6,6 +6,9 @@ import pandas as pd
 import time
 import datetime
 
+from app.LiveData import LiveData
+
+
 class DoubleAverageLines:
 
     def __init__(self):
@@ -160,7 +163,7 @@ class DoubleAverageLines:
 
                 isRightTime = self.judgeCurrentTimeWithLastRecordTime(str(open_time), str(close_time))
 
-
+                #isRightTime = True
                 # print(open_price)
                 trade_buy_price = close_price  # 记录买入的价格
                 str_date = str(time)
@@ -178,7 +181,7 @@ class DoubleAverageLines:
                 open_time = df.loc[death_time]['openTime']  # 开盘时间
                 close_time = df.loc[death_time]['closeTime']  # 收盘时间
                 isRightTime = self.judgeCurrentTimeWithLastRecordTime(str(open_time), str(close_time))
-
+                #isRightTime = True
                 print(str_date + "\t" + "卖出" + str(code) + "\t"+ str(round(p_death, 8)) +"---"+str(isRightTime))
                 if isRightTime:
                     print("release_trade_stock---sell")
@@ -201,7 +204,7 @@ class DoubleAverageLines:
         # print(type(seconds_interval))
         # print(seconds_interval)
 
-        now = int(round((time.time()-seconds_interval) * 1000))
+        now = int(round((LiveData().get_time()-seconds_interval) * 1000))
 
         now02 = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(now / 1000))
 
@@ -215,7 +218,7 @@ class DoubleAverageLines:
 
     def stampToTime(self, stamp):
 
-        # now = int(round(time.time() * 1000))
+        # now = int(round(LiveData().get_time() * 1000))
         stamp_int = int(stamp)
 
         now02 = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(stamp_int / 1000))
